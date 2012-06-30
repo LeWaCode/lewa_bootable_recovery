@@ -360,10 +360,29 @@ void show_nandroid_restore_menu(const char* path)
 #define BOARD_UMS_LUNFILE	"/sys/devices/platform/usb_mass_storage/lun0/file"
 #endif
 
+//modify by zarey 20120327 for u8800 mount storage bug fix.
 void show_mount_usb_storage_menu()
 {
-    int fd;
     Volume *vol = volume_for_path("/sdcard");
+#ifdef HUAWEI_QCOM_PALTFORM
+    static char device_mount1[256];
+    static char device_mount2[256];
+    int result = 0;
+    int mount_index = 0;
+    if ((result = try_mount(vol->device, vol->mount_point, vol->fs_type, vol->fs_options)) == 0){
+        sprintf(device_mount1,"echo %s > /sys/devices/platform/usb_mass_storage/lun0/file",vol->device);
+        __system(device_mount1);
+        mount_index = 1;
+    }else if ((result = try_mount(vol->device2, vol->mount_point, vol->fs_type, vol->fs_options)) == 0){
+        sprintf(device_mount2,"echo %s > /sys/devices/platform/usb_mass_storage/lun0/file",vol->device2);
+        __system(device_mount2);
+        mount_index = 2;
+    }else{
+        LOGE("Unable to write to ums lunfile (%s)", strerror(errno));
+        mount_index = 0;
+    }
+#else
+    int fd;
     if ((fd = open(BOARD_UMS_LUNFILE, O_WRONLY)) < 0) {
         LOGE("Unable to open ums lunfile (%s)", strerror(errno));
         return -1;
@@ -375,6 +394,7 @@ void show_mount_usb_storage_menu()
         close(fd);
         return -1;
     }
+#endif
     static char* headers[] = {  "USB Mass Storage device",
                                 "Leaving this menu unmount",
                                 "your SD card from your PC.",
@@ -390,7 +410,10 @@ void show_mount_usb_storage_menu()
         if (chosen_item == GO_BACK || chosen_item == 0)
             break;
     }
-
+#ifdef HUAWEI_QCOM_PALTFORM
+    __system("echo "" > /sys/devices/platform/usb_mass_storage/lun0/file");
+    ensure_path_unmounted(vol->mount_point);
+#else
     if ((fd = open(BOARD_UMS_LUNFILE, O_WRONLY)) < 0) {
         LOGE("Unable to open ums lunfile (%s)", strerror(errno));
         return -1;
@@ -402,6 +425,7 @@ void show_mount_usb_storage_menu()
         close(fd);
         return -1;
     }
+#endif
 }
 
 int confirm_selection(const char* title, const char* confirm)
