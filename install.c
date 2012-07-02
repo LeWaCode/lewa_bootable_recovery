@@ -190,7 +190,7 @@ try_update_binary(const char *path, ZipArchive *zip) {
         setenv("UPDATE_PACKAGE", path, 1);
         close(pipefd[0]);
         execv(binary, args);
-        fprintf(stdout, "E:Can't run %s (%s)\n", binary, strerror(errno));
+        fprintf(stdout, "出错:无法运行 %s (%s)\n", binary, strerror(errno));
         _exit(-1);
     }
     close(pipefd[1]);
@@ -336,7 +336,7 @@ int
 install_package(const char *path)
 {
     ui_set_background(BACKGROUND_ICON_INSTALLING);
-    ui_print("Finding update package...\n");
+    ui_print("查找刷机包...\n");
     ui_show_indeterminate_progress();
     LOGI("Update location: %s\n", path);
 
@@ -345,7 +345,7 @@ install_package(const char *path)
         return INSTALL_CORRUPT;
     }
 
-    ui_print("Opening update package...\n");
+    ui_print("打开刷机包...\n");
 
     int err;
 
@@ -359,7 +359,7 @@ install_package(const char *path)
         LOGI("%d key(s) loaded from %s\n", numKeys, PUBLIC_KEYS_FILE);
 
         // Give verification half the progress bar...
-        ui_print("Verifying update package...\n");
+        ui_print("验证刷机包...\n");
         ui_show_progress(
                 VERIFICATION_PROGRESS_FRACTION,
                 VERIFICATION_PROGRESS_TIME);
@@ -384,6 +384,6 @@ install_package(const char *path)
 
     /* Verify and install the contents of the package.
      */
-    ui_print("Installing update...\n");
+    ui_print("安装刷机包...\n");
     return try_update_binary(path, &zip);
 }
